@@ -1,8 +1,6 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,45 +26,39 @@ public class SearchBirdsAPI {
             System.err.println("Error connecting with API: " + e.getMessage());
         }
     }
+private static String sendGETPetition(String url) throws IOException {
+    HttpURLConnection conexion = null;
+    StringBuilder respuesta = new StringBuilder();
 
-    private static String sendGETPetition(String url) throws IOException, URISyntaxException {
-        HttpURLConnection conexion = null;
-        BufferedReader reader = null;
-        StringBuilder respuesta = new StringBuilder();
+    try {
+        URL apiURL = new URL(url); // Compatibilidad Java moderna
+        conexion = (HttpURLConnection) apiURL.openConnection();
+        conexion.setRequestMethod("GET");
+        conexion.setRequestProperty("Accept", "application/json");
 
-        try {
-            // Crear la conexión
-            URL apiURL = new URI(url).toURL();
-            conexion = (HttpURLConnection) apiURL.openConnection();
-            conexion.setRequestMethod("GET");
-            conexion.setRequestProperty("Accept", "application/json");
+        int codigoRespuesta = conexion.getResponseCode();
+        if (codigoRespuesta != HttpURLConnection.HTTP_OK) {
+            throw new IOException("Error HTTP: " + codigoRespuesta);
+        }
 
-            // Verificar el código de respuesta
-            int codigoRespuesta = conexion.getResponseCode();
-            if (codigoRespuesta != HttpURLConnection.HTTP_OK) {
-                throw new IOException("Error HTTP: " + codigoRespuesta);
-            }
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(conexion.getInputStream(),
+                java.nio.charset.StandardCharsets.UTF_8))) {
 
-            // Leer la respuesta
-            reader = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
             String linea;
             while ((linea = reader.readLine()) != null) {
                 respuesta.append(linea);
             }
-
-        } finally {
-            // Cerrar recursos
-            if (reader != null) {
-                reader.close();
-            }
-            if (conexion != null) {
-                conexion.disconnect();
-            }
         }
 
-        return respuesta.toString();
+    } finally {
+        if (conexion != null) {
+            conexion.disconnect();
+        }
     }
-    
+
+    return respuesta.toString();
+}
     
 private static void printJSONLint(String json) {
         try {
